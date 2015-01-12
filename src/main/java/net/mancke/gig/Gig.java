@@ -60,7 +60,7 @@ public class Gig {
 		out.printf("  %-10s%-60s\n", "-p", "project name. (default: work dir)");
 		
 		out.println("\ncommands are:");
-		out.printf("  %-10s%-60s\n", "generate", "generate a project shell script to stdout");
+		out.printf("  %-10s%-60s\n", "generate [file]", "generate a project shell script to [file] or stdout ");
 		out.printf("  %-10s%-60s\n", "help", "print this help message");
 	}
 
@@ -72,6 +72,8 @@ public class Gig {
 
 		ScriptWriter scriptWriter = new ScriptWriter();
 		scriptWriter.writeScriptHeader(out);
+		scriptWriter.writeProjectName(out, projectName);
+		scriptWriter.writeConfigIncludes(out);
 		new ConfigurationWriter(projectName, figConfig()).write(out);		
 		scriptWriter.writeGigScript(out);
 		

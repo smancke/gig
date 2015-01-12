@@ -17,10 +17,24 @@ public class ScriptWriter {
 	}
 	
 	public void writeGigScript(PrintStream out) throws IOException {
-		InputStream is = getClass().getResourceAsStream("gig.sh");
+		writeResource(out, "gig.sh");		
+	}
+
+	public void writeConfigIncludes(PrintStream out) throws IOException {
+		writeResource(out, "configIncludes.sh");		
+	}
+
+	private void writeResource(PrintStream out, String resource)
+			throws IOException {
+		InputStream is = getClass().getResourceAsStream(resource);
 		if (is == null) {
-			throw new RuntimeException("can not find resource for gig script: 'gig.sh'");
+			throw new RuntimeException("can not find resource for gig script: "+ resource);
 		}
-		IOUtils.copy(is, out);		
+		IOUtils.copy(is, out);
+	}
+	
+	public void writeProjectName(PrintStream out, String projectName) {
+		out.println("gig_project_name="+projectName);		
+		out.println("\n");
 	}
 }

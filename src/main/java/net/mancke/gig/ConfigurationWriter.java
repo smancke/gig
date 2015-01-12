@@ -56,7 +56,6 @@ public class ConfigurationWriter {
 		});		
 		
 		writeServiceList(out, fig);
-		writeProjectName(out, projectName);
 	}
 
 	private void writeScriptHeader(PrintStream out) {
@@ -91,7 +90,11 @@ public class ConfigurationWriter {
 
 		service.getEnvironment().forEach((k,v) -> {
 			arguments.add("-e");
-			arguments.add(k + "=" + v);
+			if (v != null && ! v.isEmpty()) {
+				arguments.add(k + "=" + v);
+			} else {
+				arguments.add(k + "=$" + k);
+			}
 		});
 		
 		arguments.add(service.getImage());
@@ -108,11 +111,6 @@ public class ConfigurationWriter {
 		List<String> serviceNames = new ArrayList<String>();
 		fig.forEach((name, service) -> serviceNames.add(0, projectName + "_" + name));
 		out.print(arrayDefinition("all_gig_services", serviceNames));
-		out.println("\n");
-	}
-
-	private void writeProjectName(PrintStream out, String projectName) {
-		out.println("gig_project_name="+projectName);		
 		out.println("\n");
 	}
 

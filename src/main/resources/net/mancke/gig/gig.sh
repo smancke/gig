@@ -1,15 +1,4 @@
 
-# read additional configurations
-if test -f "${gig_project_name}.profile"; then
-    echo "reading configuration from: ${gig_project_name}.profile"
-    . "${gig_project_name}.profile"
-else
-    if test -f "/etc/${gig_project_name}/${gig_project_name}.profile"; then
-        echo "reading configuration from: /etc/${gig_project_name}/${gig_project_name}.profile"
-        . "/etc/${gig_project_name}/${gig_project_name}.profile"
-    fi
-fi
-
 # which services to handle?
 if [[ "x$2" == "x" ]]; then
     services="${all_gig_services[@]}"
@@ -50,13 +39,13 @@ start () {
             docker start $1 > /dev/null
         else 
             printf "%-30s" "start new $1 "
-            id=$(docker run --restart=always -d --name="$1" "${!service_parameters}")
+            result=$(docker run --restart=always -d --name="$1" "${!service_parameters}")
         fi
         sleep 1
         if isRunning $1; then
-            echo "up $id"
+            echo "up $result"
         else
-            echo "error !!!"
+            echo "error !!! $result"
             returnCode=1
         fi
     fi
@@ -133,7 +122,7 @@ ps () {
 }
 
 case "$1" in
-  start|rm|status|ps)
+  start|rm|status|ls|ps)
         for s in $services; do
             $1 $s
         done;
@@ -182,7 +171,7 @@ Calling comands without arguments means all services.
     rollout           Pull and start/restart containers, if needed
     rm                Remove the containers
     ps                execute ps for the containers
-    status            shows the running status of each container
+    status|ls         shows the running status of each container
     help              Print the list of commands
 
 EOF
