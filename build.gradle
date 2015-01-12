@@ -1,0 +1,51 @@
+plugins {
+  id 'maven'
+  id 'java' 
+  id 'application' 
+  id 'com.github.johnrengelman.shadow' version '1.2.0'
+}
+
+// Set our project variables
+project.ext {
+
+}
+
+// The main class of the application
+mainClassName = 'net.mancke.gig.Gig'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile (
+            'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.5.0',
+            'commons-io:commons-io:2.4'
+    )
+    testCompile (
+	    'junit:junit:4.11'
+    )
+}
+
+run {
+//    args 'fig.yml'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.1'
+}
+
+shadowJar {
+    mergeServiceFiles()
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
