@@ -3,13 +3,11 @@ package net.mancke.gig;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 
 public class ScriptWriter {
-
-	public ScriptWriter() {
-	}
 
 	public void writeScriptHeader(PrintStream out) {
 		out.println("#!/bin/bash");
@@ -36,5 +34,11 @@ public class ScriptWriter {
 	public void writeProjectName(PrintStream out, String projectName) {
 		out.println("gig_project_name="+projectName);		
 		out.println("\n");
+	}
+
+	public void overwriteShellVariables(PrintStream out, String command, List<String> arguments) {
+		out.print("set -- "+command);
+		arguments.forEach(arg -> out.print("\"" + arg + "\""));
+		out.println();
 	}
 }

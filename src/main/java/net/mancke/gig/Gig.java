@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
@@ -39,31 +41,61 @@ public class Gig {
 	private String command = CMD_HELP;
 	private List<String> arguments = new ArrayList<String>();
 	
-	public static void main(String[] args) throws JsonParseException, JsonMappingException, IOException {
+	public static void main(String[] args) throws Exception {
 		new Gig().run(args);
 	}
 
-	public void run(String[] args) throws IOException {
+	public void run(String[] args) throws IOException, InterruptedException {
 		readArgs(args);
 		if (CMD_GENERATE.equals(command)) {
 			generateCombined();
-		} else {
+		}
+		if (CMD_HELP.equals(command)) {
 			printHelp();
+		}
+		else {
+			execute();
 		}
 	}
 
-	private void printHelp() {
-		PrintStream out = System.out;
-		out.println("gig [option].. command [arguments]..\n");
-		out.println("options are:");
-		out.printf("  %-10s%-60s\n", "-f", "project configuration file. (default: fig.yml)");
-		out.printf("  %-10s%-60s\n", "-p", "project name. (default: work dir)");
+	private void execute() throws IOException {
+		Process bash = Runtime.getRuntime().exec("/bin/bash");
 		
-		out.println("\ncommands are:");
-		out.printf("  %-10s%-60s\n", "generate [file]", "generate a project shell script to [file] or stdout ");
-		out.printf("  %-10s%-60s\n", "help", "print this help message");
+		PrintStream out = new PrintStream(bash.getOutputStream());
+		ScriptWriter scriptWriter = new ScriptWriter();
+		scriptWriter.overwriteShellVariables(out, command, arguments);
+		scriptWriter.writeProjectName(out, projectName);
+		scriptWriter.writeConfigIncludes(out);
+		new ConfigurationWriter(projectName, figConfig()).write(out);		
+		scriptWriter.writeGigScript(out);
+		
+		new Thread(
+			    () -> copy(bash.getErrorStream(), System.err)
+			).start();
+		new Thread(
+			    () -> copy(bash.getInputStream(), System.out)
+			).start();
+		
+		out.close();
+		int exitValue;
+		try {
+			exitValue = bash.waitFor();
+		} catch (InterruptedException e) {
+			throw new IOException(e);
+		}
+		if (exitValue != 0) {
+			System.exit(exitValue);
+		}
 	}
 
+	private void copy(InputStream in, PrintStream out) {
+		try {
+			IOUtils.copy(in, out);
+		} catch (IOException e) {
+			System.err.println("error reading prom process: "+ e.getMessage());
+		}
+	}
+	
 	private void generateCombined() throws IOException {
 		PrintStream  out = System.out;
 		if (arguments.size() > 0) {
@@ -97,6 +129,20 @@ public class Gig {
 		out.close();
 	}
 
+
+	private void printHelp() throws IOException {
+		execute();
+		
+		PrintStream out = System.out;
+		out.println("The gig java wrapper has additional commands and options:");
+		out.println("options are:");
+		out.printf("    %-18s%-60s\n", "-f", "project configuration file. (default: fig.yml)");
+		out.printf("    %-18s%-60s\n", "-p", "project name. (default: work dir)");
+		
+		out.println("commands are:");
+		out.printf("    %-18s%-60s\n", "generate [file]", "generate a project shell script to [file] or stdout ");
+	}
+	
 	private void readArgs(String[] args) {
 		List<String> argList = new LinkedList<String>();
 		argList.addAll(Arrays.asList(args));

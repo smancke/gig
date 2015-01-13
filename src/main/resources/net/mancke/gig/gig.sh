@@ -122,9 +122,15 @@ ps () {
 }
 
 case "$1" in
-  start|rm|status|ls|ps)
+  start|rm|status|ps)
         for s in $services; do
             $1 $s
+        done;
+        ;;
+
+  status|ls)
+        for s in $services; do
+            status $s
         done;
         ;;
 
