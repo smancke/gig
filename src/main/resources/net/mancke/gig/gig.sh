@@ -121,6 +121,20 @@ ps () {
     docker ps -a | grep -w $1
 }
 
+printHelpCommands() {
+    cat<<EOF 
+    start             start the existing containers, if they are not already up (image must exist.)
+    stop              stop containers
+    restart           stop containers and then start them
+    rollout           Pull and start/restart containers, if needed
+    rm                Remove the containers
+    ps                execute ps for the containers
+    status|ls         shows the running status of each container
+    help              Print the list of commands
+
+EOF
+}
+
 case "$1" in
   start|rm|status|ps)
         for s in $services; do
@@ -171,16 +185,13 @@ case "$1" in
 Usage: gig COMMAND [service..]
 Calling comands without arguments means all services.
 
-    start             start the existing containers, if they are not already up (image must exist.)
-    stop              stop containers
-    restart           stop containers and then start them
-    rollout           Pull and start/restart containers, if needed
-    rm                Remove the containers
-    ps                execute ps for the containers
-    status|ls         shows the running status of each container
-    help              Print the list of commands
-
 EOF
+
+        printHelpCommands
+    ;;
+    
+ help-commands)
+        printHelpCommands
     ;;
     
     * )

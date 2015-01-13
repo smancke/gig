@@ -13,9 +13,6 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-
 /**
  * Gig is a simple starter for docker small projects.
  * It is inspired by docker fig and is based on the same configuration.
@@ -131,16 +128,17 @@ public class Gig {
 
 
 	private void printHelp() throws IOException {
-		execute();
-		
+		this.command = "help-commands";
 		PrintStream out = System.out;
-		out.println("The gig java wrapper has additional commands and options:");
-		out.println("options are:");
+		out.println("Usage: gig [options..] command [arguments..]");
+		out.println("\noptions are:");
 		out.printf("    %-18s%-60s\n", "-f", "project configuration file. (default: fig.yml)");
 		out.printf("    %-18s%-60s\n", "-p", "project name. (default: work dir)");
 		
-		out.println("commands are:");
-		out.printf("    %-18s%-60s\n", "generate [file]", "generate a project shell script to [file] or stdout ");
+		out.println("\ncommands:");
+		out.printf("    %-18s%-60s\n", "generate [file]", "generate a project shell script to stdout or [file]");
+		out.println("\nservice commands: command [service..]");
+		execute();
 	}
 	
 	private void readArgs(String[] args) {
