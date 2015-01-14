@@ -126,6 +126,7 @@ printHelpCommands() {
     start             start the existing containers, if they are not already up (image must exist.)
     stop              stop containers
     restart           stop containers and then start them
+    restartrm         stop containers, remove them and then start them again
     rollout           Pull and start/restart containers, if needed
     rm                Remove the containers
     ps                execute ps for the containers
@@ -178,6 +179,15 @@ case "$1" in
             start $s
         done;
         ;;
+  restartrm)
+        servicesReverted=`echo -n "${services[@]} " | tac -s ' '`
+        for s in $servicesReverted; do
+            rm $s
+        done;
+        for s in $services; do
+            start $s
+        done;
+        ;;
 
  help|-h|'')
     cat<<EOF 
@@ -195,6 +205,7 @@ EOF
     ;;
     
     * )
+        echo "wrong command $1, try 'gig help'"
         returnCode=6
         ;;
     

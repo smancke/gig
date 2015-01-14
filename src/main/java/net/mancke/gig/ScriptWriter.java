@@ -38,7 +38,7 @@ public class ScriptWriter {
 
 	public void overwriteShellVariables(PrintStream out, String command, List<String> arguments) {
 		out.print("set -- "+command);
-		arguments.forEach(arg -> out.print("\"" + arg + "\""));
+		arguments.forEach(arg -> out.print(" \"" + arg + "\""));
 		out.println();
 	}
 }

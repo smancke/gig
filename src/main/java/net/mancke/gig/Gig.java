@@ -31,27 +31,32 @@ public class Gig {
 
 	private static final String CMD_HELP = "help";
 	private static final String CMD_GENERATE = "generate";
+	private static final String CMD_STATUS = "status";
 	
 	// our defaults
-	private String projectName = new File(System.getProperty("user.dir")).getAbsoluteFile().getName();
+	private String projectName = "gig";
 	private String figFile = "fig.yml";
-	private String command = CMD_HELP;
+	private String command = CMD_STATUS;
 	private List<String> arguments = new ArrayList<String>();
 	
 	public static void main(String[] args) throws Exception {
 		new Gig().run(args);
 	}
 
-	public void run(String[] args) throws IOException, InterruptedException {
-		readArgs(args);
-		if (CMD_GENERATE.equals(command)) {
-			generateCombined();
-		}
-		if (CMD_HELP.equals(command)) {
-			printHelp();
-		}
-		else {
-			execute();
+	public void run(String[] args) {
+		try {
+			readArgs(args);
+			if (CMD_GENERATE.equals(command)) {
+					generateCombined();
+			} else if (CMD_HELP.equals(command)) {
+				printHelp();
+			}
+			else {
+				execute();
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			System.exit(1);
 		}
 	}
 

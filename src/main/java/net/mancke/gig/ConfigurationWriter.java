@@ -80,7 +80,7 @@ public class ConfigurationWriter {
 				arguments.add(mvolumeMapping);
 			} else {
 				// relative path definition
-				arguments.add("`pwd`/" + mvolumeMapping);
+				arguments.add("$BASE_DIR/" + mvolumeMapping);
 			}
 		});			
 		service.getLinks().forEach(linkedContainer -> {
