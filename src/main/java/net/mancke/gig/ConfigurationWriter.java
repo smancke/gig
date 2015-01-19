@@ -85,7 +85,7 @@ public class ConfigurationWriter {
 		});			
 		service.getLinks().forEach(linkedContainer -> {
 			arguments.add("--link");
-			arguments.add(projectName +"_"+ linkedContainer +":"+ projectName +"_"+ linkedContainer +" ");
+			arguments.add(projectName +"_"+ linkedContainer);
 		});
 
 		service.getEnvironment().forEach((k,v) -> {
