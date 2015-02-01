@@ -98,7 +98,7 @@ rm () {
 status () {
     printf "%-25s" "$1"
     if isRunning $1; then
-        echo "running"
+        echo "up"
         return
     fi
     if isRestarting $1; then

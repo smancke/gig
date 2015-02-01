@@ -35,15 +35,24 @@ public class Gig {
 	
 	// our defaults
 	private String projectName = "gig";
-	private String figFile = "fig.yml";
+	private String figFile = null; // no external filenam set
 	private String command = CMD_STATUS;
 	private List<String> arguments = new ArrayList<String>();
+	private PrintStream stdOut;
+	private PrintStream stdErr;
 	
-	public static void main(String[] args) throws Exception {
-		new Gig().run(args);
+	public static void main(String[] args) {
+		try {
+			new Gig().run(args, System.out, System.err);
+		} catch (GigExitException e) {
+			System.err.println(e.getMessage());
+			System.exit(e.getExitcode());
+		}
 	}
 
-	public void run(String[] args) {
+	public void run(String[] args, PrintStream out, PrintStream err) throws GigExitException {
+		this.stdOut = out;
+		this.stdErr = err;
 		try {
 			readArgs(args);
 			if (CMD_GENERATE.equals(command)) {
@@ -55,12 +64,12 @@ public class Gig {
 				execute();
 			}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
-			System.exit(1);
+			throw new GigExitException(e.getMessage(), 1);
+			
 		}
 	}
 
-	private void execute() throws IOException {
+	private void execute() throws IOException, GigExitException {
 		Process bash = Runtime.getRuntime().exec("/bin/bash");
 		
 		PrintStream out = new PrintStream(bash.getOutputStream());
@@ -72,10 +81,10 @@ public class Gig {
 		scriptWriter.writeGigScript(out);
 		
 		new Thread(
-			    () -> copy(bash.getErrorStream(), System.err)
+			    () -> copy(bash.getErrorStream(), this.stdErr)
 			).start();
 		new Thread(
-			    () -> copy(bash.getInputStream(), System.out)
+			    () -> copy(bash.getInputStream(), this.stdOut)
 			).start();
 		
 		out.close();
@@ -86,7 +95,7 @@ public class Gig {
 			throw new IOException(e);
 		}
 		if (exitValue != 0) {
-			System.exit(exitValue);
+			throw new GigExitException("error.", exitValue);
 		}
 	}
 
@@ -117,11 +126,36 @@ public class Gig {
 	}
 
 	private InputStream figConfig() throws FileNotFoundException {
+		if (figFile == null) {
+			figFile = searchFigFile();
+		}
 		File configFile = new File(figFile);
 		if (! configFile.canRead()) {
 			throw new IllegalArgumentException("can not read fig configuration file: "+ figFile);
 		}
 		return new FileInputStream(configFile);
+	}
+
+	/**
+	 * Search for gig.yml and fig.yml in all directories up to '/'
+	 */
+	private String searchFigFile() {
+		File dir = new File(System.getProperty("user.dir"));
+		while (true) {
+			File gigYml = new File(dir, "gig.yml");
+			if (gigYml.exists()) {
+				return gigYml.getAbsolutePath();
+			}
+			File figYml = new File(dir, "fig.yml");
+			if (figYml.exists()) {
+				return figYml.getAbsolutePath();
+			}
+			dir = dir.getParentFile();
+			System.out.println(dir.getAbsolutePath());
+			if (! dir.exists()) {
+				throw new IllegalArgumentException("can not find configuration file: gig.yml or fig.yaml (also not in any parent directory.) "+ figFile);
+			}				
+		}
 	}
 
 	private void generate(String configFile) throws IOException {		 
@@ -132,7 +166,7 @@ public class Gig {
 	}
 
 
-	private void printHelp() throws IOException {
+	private void printHelp() throws IOException, GigExitException {
 		this.command = "help-commands";
 		PrintStream out = System.out;
 		out.println("Usage: gig [options..] command [arguments..]");

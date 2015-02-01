@@ -1,0 +1,21 @@
+
+nginx_frontend:
+    image: nginx
+    ports: 
+      - "9005:80"
+    volumes:
+      - nginx_front_cfg:/usr/share/nginx/html
+    environment:
+      DUMMY_VALUE:
+      DUMMY_VARIABLE: $DUMMY_VALUE
+      DUMMY_VARIABLE2: any value
+    links:
+      - "nginx_backend:backend"
+      
+nginx_backend:
+    image: nginx
+    ports: 
+      - "9006:80"
+    volumes:
+      - nginx_backend_cfg:/usr/share/nginx/html
+
