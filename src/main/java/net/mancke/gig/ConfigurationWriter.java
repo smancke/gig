@@ -47,7 +47,6 @@ public class ConfigurationWriter {
 	 * @param out the output destination
 	 */
 	public void write(PrintStream out) {
-//		writeScriptHeader(out);
 		fig.forEach((name, service) -> {
 			String serviceName = projectName + "_" + name;
 			
@@ -57,13 +56,6 @@ public class ConfigurationWriter {
 		
 		writeServiceList(out, fig);
 	}
-
-//	private void writeScriptHeader(PrintStream out) {
-//		out.println("#!/bin/bash\n\n");
-//		out.println("script_name=`realpath $BASH_SOURCE`");
-//		out.println("current_dir=`dirname $script_name`");
-//		out.println("\n\n");
-//	}
 
 	private void writeRunOptions(PrintStream out, String serviceName,
 			Service service) {		
@@ -85,7 +77,11 @@ public class ConfigurationWriter {
 		});			
 		service.getLinks().forEach(linkedContainer -> {
 			arguments.add("--link");
-			arguments.add(projectName +"_"+ linkedContainer);
+			if (linkedContainer.contains(":")) {
+				arguments.add(projectName +"_"+ linkedContainer);
+			} else {
+				arguments.add(projectName +"_"+ linkedContainer +":"+linkedContainer);
+			}
 		});
 
 		service.getEnvironment().forEach((k,v) -> {
