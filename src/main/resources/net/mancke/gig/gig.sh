@@ -117,6 +117,23 @@ status () {
     returnCode=4
 }
 
+versions () {
+    echo
+    image=$(docker ps -a | grep -w $1 | awk '{print $2}')
+    imageRepo=$(echo $image | sed -e s/:.*//)
+    imageTag=$(echo $image | sed -e s/.*://)
+    imageHash=$(docker images | grep -w "$imageRepo" | grep -w "$imageTag" | awk '{print $3}')
+    versionFiles=$(docker exec $1 bash -c 'cat /*.version' | sed -e 's/^/    "/'  | sed -e 's/$/"/' | sed -e ':a;N;$!ba;s/\n/,\n/g')
+    
+    echo "\"$1\": {"
+    echo "  \"image\": \"$image\","
+    echo "  \"imageHash\": \"$imageHash\","
+    echo "  \"versionFiles\": ["
+    echo "$versionFiles"
+    echo "  ]"
+    echo -n "}"
+}
+
 ps () {
     docker ps -a | grep -w $1
 }
@@ -131,6 +148,7 @@ printHelpCommands() {
     rm                Remove the containers
     ps                execute ps for the containers
     status|ls         shows the running status of each container
+    versions          shows json of the image versions and *.version files in containers '/'
     help              Print the list of commands
 
 EOF
@@ -187,6 +205,16 @@ case "$1" in
         for s in $services; do
             start $s
         done;
+        ;;
+  versions)
+        echo -n "{"
+        separator=""
+        for s in $services; do
+            echo $separator
+            separator=","
+            $1 $s
+        done;
+        echo -n "}"
         ;;
 
  help|-h|'')

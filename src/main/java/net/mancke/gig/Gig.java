@@ -151,7 +151,6 @@ public class Gig {
 				return figYml.getAbsolutePath();
 			}
 			dir = dir.getParentFile();
-			System.out.println(dir.getAbsolutePath());
 			if (! dir.exists()) {
 				throw new IllegalArgumentException("can not find configuration file: gig.yml or fig.yaml (also not in any parent directory.) "+ figFile);
 			}				
