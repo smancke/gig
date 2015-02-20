@@ -1,9 +1,29 @@
 
+
+## argument handling
+arg_command=$1
+shift
+
+if [[ "$HOST" =~ ^user.* ]]; then
+    echo "yes"
+fi
+
+while [[ "$1" =~ ^-.* ]]; do
+    case $1 in
+        -t | --tag )            shift
+                                arg_tag=$1
+                                ;;
+        * )                     echo "wrong option $1"
+                                exit 1
+    esac
+    shift
+done
+
 # which services to handle?
-if [[ "x$2" == "x" ]]; then
+if [[ "x$1" == "x" ]]; then
     services="${all_gig_services[@]}"
 else
-    services="${@:2}"
+    services="${@:1}"
 fi
 
 
@@ -74,6 +94,18 @@ stop () {
 pull () {
     imageVar="$1_image"
     docker pull ${!imageVar}
+}
+
+push () {
+    imageVar="$1_image"
+    docker push ${!imageVar}
+}
+
+tag () {
+    imageVar="$1_image"
+    theTag=$( echo ${!imageVar} | sed -e s/:.*/:$arg_tag/ )
+    echo "tagging: ${!imageVar} $theTag"
+    docker tag -f ${!imageVar} $theTag
 }
 
 rm () {
@@ -149,15 +181,18 @@ printHelpCommands() {
     ps                execute ps for the containers
     status|ls         shows the running status of each container
     versions          shows json of the image versions and *.version files in containers '/'
+    tag -t <tag>      tags the images with the supplied version
+    pull              pulls the images from the registry
+    push              push the images to the registry
     help              Print the list of commands
 
 EOF
 }
 
-case "$1" in
-  start|rm|status|ps)
+case "$arg_command" in
+  start|rm|status|ps|pull|push|tag)
         for s in $services; do
-            $1 $s
+            $arg_command $s
         done;
         ;;
 
@@ -170,7 +205,7 @@ case "$1" in
   stop)
         servicesReverted=`echo -n "${services[@]} " | tac -s ' '`
         for s in $servicesReverted; do
-            $1 $s
+            $arg_command $s
         done;
         ;;
 
@@ -212,7 +247,7 @@ case "$1" in
         for s in $services; do
             echo $separator
             separator=","
-            $1 $s
+            $arg_command $s
         done;
         echo -n "}"
         ;;
@@ -233,7 +268,7 @@ EOF
     ;;
     
     * )
-        echo "wrong command $1, try 'gig help'"
+        echo "wrong command $arg_command, try 'gig help'"
         returnCode=6
         ;;
     
