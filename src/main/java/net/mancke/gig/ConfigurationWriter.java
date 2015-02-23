@@ -68,7 +68,7 @@ public class ConfigurationWriter {
 		service.getVolumes().forEach(mvolumeMapping -> { 
 			arguments.add("-v");
 			
-			if (mvolumeMapping.startsWith("/")) {
+			if (mvolumeMapping.startsWith("/") || mvolumeMapping.startsWith("$")) {
 				arguments.add(mvolumeMapping);
 			} else {
 				// relative path definition
