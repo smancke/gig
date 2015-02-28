@@ -13,6 +13,9 @@ while [[ "$1" =~ ^-.* ]]; do
         -t | --tag )            shift
                                 arg_tag=$1
                                 ;;
+        -d | --dir )            shift
+                                arg_dir=$1
+                                ;;
         * )                     echo "wrong option $1"
                                 exit 1
     esac
@@ -55,10 +58,10 @@ start () {
         echo "already running $1"
     else
         if isExited $1; then
-            printf "%-30s" "restart existing $1 "
+            printf "%-40s" "restart existing $1 "
             docker start $1 > /dev/null
         else 
-            printf "%-30s" "start new $1 "
+            printf "%-40s" "start new $1 "
             result=$(docker run --restart=always -d --name="$1" "${!service_parameters}")
         fi
         sleep 1
@@ -75,7 +78,7 @@ start () {
 stop () {
     if isExisting $1; then                
         if isRunning $1 || isRestarting $1; then
-            printf "%-30s" "stopping $1 "
+            printf "%-40s" "stopping $1 "
             docker stop $1 > /dev/null
             if isRunning $1;  then
                 echo "error !!!"
@@ -91,6 +94,22 @@ stop () {
     fi
 }
 
+save-logs () {
+    if [ "x$arg_dir" == "x" ] || [ ! -d $arg_dir ]; then
+        echo "target directory '$arg_dir' does not exist"
+        exit 1;
+    fi;
+    printf "%-40s" "writing $1 "
+    file="$arg_dir/$1_`date +%Y-%m-%d_%H-%M-%S`.log"
+    docker logs -t "$1" &> "$file"
+    if [ $? -ne 0 ]; then
+        echo "error !!!"
+        returnCode=2
+    else
+        echo "$file"
+    fi
+}
+
 pull () {
     imageVar="$1_image"
     docker pull ${!imageVar}
@@ -98,7 +117,9 @@ pull () {
 
 push () {
     imageVar="$1_image"
-    docker push ${!imageVar}
+    docker push ${!imageVar}      docker logs -t "$1" > "$file"
+  docker logs -t "$1" > "$file"
+
 }
 
 tag () {
@@ -114,7 +135,7 @@ rm () {
             echo "stopping $1"
             docker stop $1 > /dev/null
         fi
-        printf "%-30s" "removing $1 "
+        printf "%-40s" "removing $1 "
         docker rm $1 > /dev/null
         if isExisting $1; then                
             echo "error !!!"
@@ -128,7 +149,7 @@ rm () {
 }
 
 status () {
-    printf "%-25s" "$1"
+    printf "%-30s" "$1"
     if isRunning $1; then
         echo "up"
         return
@@ -172,25 +193,25 @@ ps () {
 
 printHelpCommands() {
     cat<<EOF 
-    start             start the existing containers, if they are not already up (image must exist.)
-    stop              stop containers
-    restart           stop containers and then start them
-    restartrm         stop containers, remove them and then start them again
-    rollout           Pull and start/restart containers, if needed
-    rm                Remove the containers
-    ps                execute ps for the containers
-    status|ls         shows the running status of each container
-    versions          shows json of the image versions and *.version files in containers '/'
-    tag -t <tag>      tags the images with the supplied version
-    pull              pulls the images from the registry
-    push              push the images to the registry
-    help              Print the list of commands
-
+    start               start the existing containers, if they are not already up (image must exist.)
+    stop                stop containers
+    restart             stop containers and then start them
+    restartrm           stop containers, remove them and then start them again
+    rollout             pull and start/restart containers, if needed
+    rm                  remove the containers
+    ps                  execute ps for the containers
+    status|ls           shows the running status of each container
+    versions            shows json of the image versions and *.version files in containers '/'
+    tag -t <tag>        tags the images with the supplied version
+    pull                pulls the images from the registry
+    push                push the images to the registry
+    save-logs -d <dir>  the images to the registry
+    help                print the list of commands
 EOF
 }
 
 case "$arg_command" in
-  start|rm|status|ps|pull|push|tag)
+  start|rm|status|ps|pull|push|tag|save-logs)
         for s in $services; do
             $arg_command $s
         done;
