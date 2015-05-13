@@ -26,4 +26,4 @@ chmod a+x gig_$version/gig
 tar -c gig_$version | gzip > gig_$version.tar.gz
 
 git tag -a $version -m "released version $version"
-
+git push --tags

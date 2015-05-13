@@ -117,9 +117,7 @@ pull () {
 
 push () {
     imageVar="$1_image"
-    docker push ${!imageVar}      docker logs -t "$1" > "$file"
-  docker logs -t "$1" > "$file"
-
+    docker push ${!imageVar}
 }
 
 tag () {
