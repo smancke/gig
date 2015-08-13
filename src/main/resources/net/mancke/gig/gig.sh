@@ -29,6 +29,15 @@ else
     services="${@:1}"
 fi
 
+services_filtered=()
+for s in $services; do
+    if [[ $s == ${gig_project_name}_* ]]; then
+        services_filtered+=($s)
+    else        
+        services_filtered+=("${gig_project_name}_$s")
+    fi
+done
+services="${services_filtered[@]}"
 
 returnCode=0
 
@@ -101,12 +110,16 @@ save-logs () {
     fi;
     printf "%-40s" "writing $1 "
     file="$arg_dir/$1_`date +%Y-%m-%d_%H-%M-%S`.log"
-    docker logs -t "$1" &> "$file"
-    if [ $? -ne 0 ]; then
-        echo "error !!!"
-        returnCode=2
+    if isExisting $1; then
+        docker logs -t "$1" &> "$file"
+        if [ $? -ne 0 ]; then
+            echo "error !!!"
+            returnCode=2
+        else
+            echo "$file"
+        fi
     else
-        echo "$file"
+        echo "container absent"        
     fi
 }
 
@@ -168,12 +181,28 @@ status () {
     returnCode=4
 }
 
+update () {
+    printf "%-30s" $1
+    if isRunning $1 ; then 
+        if isUpdateable $1; then
+            echo 'updateable -> restart container'
+            rm $1
+            start $1
+        else
+            echo 'up to date'
+        fi
+    else
+        echo 'absent -> start container'
+        start $1
+    fi
+}
+
 versions () {
     echo
     image=$(docker ps -a | grep -w $1 | awk '{print $2}')
     imageRepo=$(echo $image | sed -e s/:.*//)
     imageTag=$(echo $image | sed -e s/.*://)
-    imageHash=$(docker images | grep -w "$imageRepo" | grep -w "$imageTag" | awk '{print $3}')
+    imageHash=$(docker images $imageRepo | grep "\s$imageTag\s" | awk '{print $3}')
     versionFiles=$(docker exec $1 bash -c 'cat /*.version' | sed -e 's/^/    "/'  | sed -e 's/$/"/' | sed -e ':a;N;$!ba;s/\n/,\n/g')
     
     echo "\"$1\": {"
@@ -189,21 +218,54 @@ ps () {
     docker ps -a | grep -w $1
 }
 
+arrayContains() {
+    local n=$#
+    local value=${!n}
+    for ((i=1;i < $#;i++)) {
+        if [ "${!i}" == "${value}" ]; then
+            echo "y"
+            return 0
+        fi
+    }
+    echo "n"
+    return 1
+}
+
+isUpdateable() {
+    containerImageId=$(docker inspect --format='{{.Image}}' $1)
+    imageVar="$1_image"
+    image=${!imageVar}
+    imageRepo=$(echo $image | sed -e s/:.*//)
+    if [ "${image/:}" = "$image" ] ; then
+        imageTag=latest
+    else
+        imageTag=$(echo $image | sed -e s/.*://)
+    fi
+    imageHash=$(docker images --no-trunc $imageRepo | grep "\s$imageTag\s" | awk '{print $3}')
+    
+    if [ "x$imageHash" == "x$containerImageId" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
 printHelpCommands() {
     cat<<EOF 
+    status (default)    shows the running status of each container
     start               start the existing containers, if they are not already up (image must exist.)
     stop                stop containers
     restart             stop containers and then start them
     restartrm           stop containers, remove them and then start them again
-    rollout             pull and start/restart containers, if needed
+    update              rm and start container if a newer image is available; start container if not running
+    rollout             pull images and do update
     rm                  remove the containers
     ps                  execute ps for the containers
-    status|ls           shows the running status of each container
     versions            shows json of the image versions and *.version files in containers '/'
     tag -t <tag>        tags the images with the supplied version
     pull                pulls the images from the registry
     push                push the images to the registry
-    save-logs -d <dir>  the images to the registry
+    save-logs -d <dir>  save the container logs to the target dir
     help                print the list of commands
 EOF
 }
@@ -215,7 +277,7 @@ case "$arg_command" in
         done;
         ;;
 
-  status|ls)
+  status|ls|'')
         for s in $services; do
             status $s
         done;
@@ -228,17 +290,18 @@ case "$arg_command" in
         done;
         ;;
 
+  update)
+      for s in $services; do
+          update $s
+      done;
+      ;;  
+
   rollout)
         for s in $services; do
             pull $s
         done;
-        # todo: only restart if the image was updated"
-        servicesReverted=`echo -n "${services[@]} " | tac -s ' '`
-        for s in $servicesReverted; do
-            rm $s
-        done;
         for s in $services; do
-            start $s
+            update $s
         done;
         ;;
 
@@ -271,7 +334,7 @@ case "$arg_command" in
         echo -n "}"
         ;;
 
- help|-h|'')
+ help|-h|--help)
     cat<<EOF 
 
 Usage: gig COMMAND [service..]
