@@ -48,15 +48,21 @@ Without arguments, to commands will be applied to all your services within the
 fig.yml. But you can also specify the services to manage.
 ```
 service commands: command [service..]
-    start             start the existing containers, if they are not already up (image must exist.)
-    stop              stop containers
-    restart           stop containers and then start them
-    restartrm         stop containers, remove them and then start them again
-    rollout           Pull and start/restart containers, if needed
-    rm                Remove the containers
-    ps                execute ps for the containers
-    status|ls         shows the running status of each container
-    help              Print the list of commands
+    status (default)    shows the running status of each container
+    start               start the existing containers, if they are not already up (image must exist.)
+    stop                stop containers
+    restart             stop containers and then start them
+    restartrm           stop containers, remove them and then start them again
+    update              rm and start container if a newer image is available; start container if not running
+    rollout             pull images and do update
+    rm                  remove the containers
+    ps                  execute ps for the containers
+    versions            shows json of the image versions and *.version files in containers '/'
+    tag -t <tag>        tags the images with the supplied version
+    pull                pulls the images from the registry
+    push                push the images to the registry
+    save-logs -d <dir>  save the container logs to the target dir
+    help                print the list of commands
 ```
 
 Differences between original fig.yml format
