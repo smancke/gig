@@ -68,5 +68,6 @@ service commands: command [service..]
 Differences between original fig.yml format
 -------------------------------------------
 - You can use shell variables in all places, which will be expanded while execution
-
+- Gig has no `build` directive
+- Gig does not order services corresponding to their link dependencies, but starts them from bottom to top
 

@@ -253,7 +253,7 @@ isUpdateable() {
 printHelpCommands() {
     cat<<EOF 
     status (default)    shows the running status of each container
-    start               start the existing containers, if they are not already up (image must exist.)
+    start               start the existing containers, if not already up
     stop                stop containers
     restart             stop containers and then start them
     restartrm           stop containers, remove them and then start them again
